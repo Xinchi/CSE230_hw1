@@ -65,16 +65,19 @@ The following are the definitions of shapes from Chapter 2 of SOE:
    at the end of Section 2.1 (Exercise 2.1). Each should return a Shape
    built with the Polygon constructor.
 
-> rectangle :: Side -> Side -> Shape
-> rectangle = error "Define me!" 
-rtTriangle
->  :: Side -> Side -> Shape
-> rtTriangle = error "Define me!" 
+> rectangle       :: Side -> Side -> Shape
+> rectangle s1 s2  = Polygon [(0,0),(s1,0),(s1,s2),(0,s2)] 
+> rtTriangle        :: Side -> Side -> Shape
+> rtTriangle s1 s2  = Polygon [(0,0),(s1,0),(0,s2)]
 
 2. Define a function
 
 > sides :: Shape -> Int
-> sides = error "Define me!"
+> sides (Rectangle _ _) = 4
+> sides (Ellipse _ _) = 42
+> sides (RtTriangle _ _) = 3
+> sides (Polygon []) = 0
+> sides (Polygon (v1:vs)) = 1+sides (Polygon vs)
 
   which returns the number of sides a given shape has.
   For the purposes of this exercise, an ellipse has 42 sides,
