@@ -107,7 +107,12 @@ The following are the definitions of shapes from Chapter 2 of SOE:
    Write a function
    
 > hanoi :: Int -> String -> String -> String -> IO ()
-> hanoi = error "Define me!"
+> hanoi 1 r1 r2 r3 = do
+>                 putStrLn( "Move disk from " ++ r1 ++ " to "++r2)
+> hanoi n r1 r2 r3 = do
+>                 hanoi(n-1)r1 r3 r2
+>                 putStrLn( "Move disk from " ++ r1 ++ " to "++r2)
+>                 hanoi(n-1) r3 r2 r1
 
   that, given the number of discs $n$ and peg names $a$, $b$, and $c$,
   where a is the starting peg,
