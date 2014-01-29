@@ -73,11 +73,14 @@ The following are the definitions of shapes from Chapter 2 of SOE:
 2. Define a function
 
 > sides :: Shape -> Int
-> sides (Rectangle _ _) = 4
-> sides (Ellipse _ _) = 42
-> sides (RtTriangle _ _) = 3
-> sides (Polygon []) = 0
-> sides (Polygon (v1:vs)) = 1+sides (Polygon vs)
+
+> sides s = 
+>  case s of Rectangle _ _ -> 4
+>            Ellipse _ _   -> 42
+>            RtTriangle _ _-> 3
+>            Polygon []    -> 0
+>            Polygon (_:_:_:vs) -> length vs + 3
+>            _ -> 0
 
   which returns the number of sides a given shape has.
   For the purposes of this exercise, an ellipse has 42 sides,
@@ -167,63 +170,93 @@ First, a warmup:
    they are passed contain at least one element.
 
 > lengthNonRecrusive :: [a] -> Int
-> lengthNonRecrusive = error "Define me!"
+> lengthNonRecrusive xs = foldr (\_ x -> x+1) 1 xs
 
-> doubleEach :: [Int] -> [Int]
-> doubleEach = error "Define me!"
+> doubleEach       :: [Int] -> [Int]
+> doubleEach []     = []
+> doubleEach (x:xs) = 2*x:(doubleEach xs)
 
 > doubleEachNonRecursive :: [Int] -> [Int]
-> doubleEachNonRecursive = error "Define me!"
+> doubleEachNonRecursive xs = map (\x -> x*2) xs
 
 > pairAndOne :: [Int] -> [(Int, Int)]
-> pairAndOne = error "Define me!"
+> pairAndOne [] = []
+> pairAndOne (x:xs) = (x, x+1):pairAndOne(xs)
 
 > pairAndOneNonRecursive :: [Int] -> [(Int, Int)]
-> pairAndOneNonRecursive = error "Define me!"
+> pairAndOneNonRecursive xs = map (\x -> (x, x+1)) xs
 
 > addEachPair :: [(Int, Int)] -> [Int]
-> addEachPair = error "Define me!" 
+> addEachPair [] = []
+> addEachPair ((a,b):xs) = (a+b):addEachPair(xs)
 
 > addEachPairNonRecursive :: [(Int, Int)] -> [Int]
-> addEachPairNonRecursive = error "Define me!" 
+> addEachPairNonRecursive xs = map (\(a,b) -> a+b) xs
 
 > minList :: [Int] -> Int
-> minList = error "Define me!"
+> minList [] = maxBound :: Int
+> minList (x:xs) 
+>                  | x <= minTail = x
+>                  | otherwise = minTail
+>                    where minTail = minList(xs)
 
 > minListNonRecursive :: [Int] -> Int
-> minListNonRecursive = error "Define me!"
+> minListNonRecursive xs = foldl (min) maxBound xs
 
 > maxList :: [Int] -> Int
-> maxList = error "Define me!"
+> maxList [] = minBound :: Int
+> maxList (x:xs) 
+>                  | x >= maxTail = x
+>                  | otherwise = maxTail
+>                    where maxTail = maxList(xs)
 
 > maxListNonRecursive :: [Int] -> Int
-> maxListNonRecursive = error "Define me!"
+> maxListNonRecursive xs = foldl (max) minBound xs
 
 > data Tree a = Leaf a | Branch (Tree a) (Tree a)
 >               deriving (Show, Eq)
 
+> leaf = Leaf 1
+> branch = Branch (Leaf 1) (Leaf 2)
+> tree = Branch (branch) (branch)
+
 > fringe :: Tree a -> [a]
-> fringe = error "Define me!"
+> fringe a = 
+>     case a of Leaf b -> [b]
+>               Branch b c -> fringe(b)++fringe(c)
+
 
 > treeSize :: Tree a -> Int
-> treeSize = error "Define me!"
+> treeSize a = length (fringe a) 
 
 > treeHeight :: Tree a -> Int
-> treeHeight = error "Define me!"
+> treeHeight a = 
+>     case a of Leaf b-> 0
+>               Branch b c-> 1+(max (treeHeight b) (treeHeight c))
 
 > data InternalTree a = ILeaf | IBranch a (InternalTree a) (InternalTree a)
 >                       deriving (Show, Eq)
 
+> ileaf = ILeaf
+> iTree = IBranch 3 ileaf ileaf
 > takeTree :: Int -> InternalTree a -> InternalTree a
-> takeTree = error "Define me!"
+> takeTree a t
+>  | a==0 = ILeaf
+>  | otherwise = case t of ILeaf -> ILeaf
+>                          IBranch b c d -> IBranch b (takeTree (a-1) c) (takeTree (a-1) d)
+
 
 > takeTreeWhile :: (a -> Bool) -> InternalTree a -> InternalTree a
-> takeTreeWhile = error "Define me!"
- 
+> takeTreeWhile p t =
+>           case t of ILeaf -> ILeaf
+>                     IBranch a b c
+>                        |  (p a)==True ->IBranch a (takeTreeWhile p b) (takeTreeWhile p c)
+>                        |otherwise -> ILeaf
+
 Write the function map in terms of foldr:
 
 > myMap :: (a -> b) -> [a] -> [b]
-> myMap = error "Define me!"
+> myMap f xs = foldr (\a b -> (f a):b) [] xs
 
 The rest of this assignment involves transforming XML documents.
 To keep things simple, we will not deal with the full generality of XML,
