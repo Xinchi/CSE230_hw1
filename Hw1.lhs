@@ -89,7 +89,12 @@ The following are the definitions of shapes from Chapter 2 of SOE:
 3. Define a function
 
 > bigger :: Shape -> Float -> Shape
-> bigger = error "Define me!"
+> bigger s e = 
+>     case s of Rectangle a b -> Rectangle (factor*a) (factor*b)
+>               Ellipse a b -> Ellipse (factor*a) (factor*b)
+>               RtTriangle a b -> RtTriangle (factor*a) (factor*b)
+>               Polygon vs -> Polygon (map (\(a,b) -> ((factor*a),(factor*b))) vs)
+>               where factor = sqrt(e)
 
   that takes a shape `s` and expansion factor `e` and returns
   a shape which is the same as (i.e., similar to in the geometric sense)
