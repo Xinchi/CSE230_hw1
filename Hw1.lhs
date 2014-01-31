@@ -137,29 +137,71 @@ move disc from c to b
 
 Part 2: Drawing Fractals
 ------------------------
-
+ 
 1. The Sierpinski Carpet is a recursive figure with a structure similar to
    the Sierpinski Triangle discussed in Chapter 3:
-
+ 
 ![Sierpinski Carpet](/static/scarpet.png)
-
+ 
 Write a function `sierpinskiCarpet` that displays this figure on the
 screen:
-
+ 
+> colors = [Magenta, Blue, Green, Red, Yellow, Black]
+ 
+> colorSquare w x y s c = drawInWindow w (withColor (colors !! c)(polygon [(x,y),(x+s,y),(x+s,y+s),(x,y+s)]))
+ 
+> colorCircle w x y s c = drawInWindow w (withColor (colors !! c)(ellipse (x,y) ((x+s),y+s)))
+ 
+> sierpinskiSquare w x y s = do
+>               let rs = s `div` 3
+>               if (s < 3) then colorSquare w x y s 1
+>                       else do
+>                               sierpinskiSquare w x y rs
+>                               sierpinskiSquare w (x+rs) y rs
+>                               sierpinskiSquare w x (y+rs) rs
+>                               sierpinskiSquare w (x+2*rs) y rs
+>                               sierpinskiSquare w x (y+2*rs) rs
+>                               sierpinskiSquare w (x+2*rs) (y+rs) rs
+>                               sierpinskiSquare w (x+rs) (y+2*rs) rs
+>                               sierpinskiSquare w (x+2*rs) (y+2*rs) rs
+                                                               
+                                                                       
 > sierpinskiCarpet :: IO ()
-> sierpinskiCarpet = error "Define me!"
-
+> sierpinskiCarpet = runGraphics $ do
+>                               w <- openWindow "Sierpinski Square" (500,500)
+>                               sierpinskiSquare w 0 0 500
+>                               k <- getKey w
+>                               closeWindow w
+ 
 Note that you either need to run your program in `SOE/src` or add this
 path to GHC's search path via `-i/path/to/SOE/src/`.
 Also, the organization of SOE has changed a bit, so that now you use
 `import SOE` instead of `import SOEGraphics`.
-
+ 
 2. Write a function `myFractal` which draws a fractal pattern of your
    own design.  Be creative!  The only constraint is that it shows some
    pattern of recursive self-similarity.
+ 
+> myFractalSquare w x y s c = do
+>               let c1 = (c+1) `mod` (length colors)
+>               let c2 = (c+1) `mod` (length colors)
+>               let rs = s `div` 2
+>               if (s < 2) then colorCircle w x y s c
+>               else       do
+>                               colorSquare w x y s c
+>                               colorCircle w x y rs c1
+>                               colorCircle w (x+rs) y rs c1
+>                               colorCircle w x (y+rs) rs c1
+>                               colorCircle w (x+rs) (y+rs) rs c1
+>                               myFractalSquare w (x + (rs `div` 2)) (y + (rs`div` 2)) rs c2
+
 
 > myFractal :: IO ()
-> myFractal = error "Define me!"
+> myFractal = runGraphics $ do
+>               w <- openWindow "My Fractal" (500,500)
+>               myFractalSquare w 0 0 500 1
+>               k <- getKey w
+>               closeWindow w
 
 Part 3: Transforming XML Documents
 ----------------------------------
@@ -269,13 +311,7 @@ or with issues of parsing. Instead, we will represent XML documents as
 instances of the following simpliﬁed type:
 
 ~~~~
-data SimpleXML =
-   PCDATA String
- | Element ElementName [SimpleXML]
- deriving Show
 
-type ElementName = String
-~~~~
 
 That is, a `SimpleXML` value is either a `PCDATA` ("parsed character
 data") node containing a string or else an `Element` node containing a
@@ -349,8 +385,46 @@ representing a play to another XML structure that, when printed,
 yields the HTML speciﬁed above (but with no whitespace except what's
 in the textual data in the original XML).
 
-> formatPlay :: SimpleXML -> SimpleXML
-> formatPlay xml = PCDATA "WRITE ME!"
+data SimpleXML =
+   PCDATA String
+ | Element ElementName [SimpleXML]
+ deriving Show
+
+type ElementName = String
+~~~~
+
+
+> formatPlay :: SimpleXML -> SimpleXML 
+> formatPlay xml = 
+>   head (transform 0 xml)
+>     where
+
+transformchangesthegivenSimpleXMLinplaytosample. TheresultoftransformhastobealistofSimpleXMLsincesometimes oneelementbecomestwoafterexchange.
+
+>       transform :: Int -> SimpleXML -> [SimpleXML] 
+>       transform level old =
+>         let 
+>           br = Element "br" []
+
+       formTitle makes the title element with given level of header size.
+
+>           formTitle :: Int -> String -> SimpleXML
+>           formTitle level title = Element ('h':(show level)) [PCDATA title]
+
+formLististhecoroutineoftransform,changesalistofSimpleXMLfromplay tosample.
+
+>           formList :: Int -> [SimpleXML] -> [SimpleXML]
+>           formList level [] = []
+>           formList level (head : tail) = (transform level head) ++ (formList level tail)
+>         in case old of
+>           Element "PLAY" body -> [Element "html" [Element "body" (formList (level+1) body)]]
+>           Element "TITLE" [PCDATA title] -> [formTitle level title]
+>           Element "PERSONAE" body -> (formTitle (level+1) "Dramatis Personae"):(formList (level+1) body)
+>           Element "PERSONA" person -> person ++ [br]
+>           Element "LINE" line -> line ++ [br]
+>           Element "SPEAKER" person -> [Element "b" person , br]
+>           Element _ body -> formList (level+1) body
+>           _ -> [old]
 
 The main action that we've provided below will use your function to
 generate a ﬁle `dream.html` from the sample play. The contents of this
